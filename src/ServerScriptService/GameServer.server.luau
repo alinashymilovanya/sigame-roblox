@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local shared = ReplicatedStorage:FindFirstChild("Shared")
 local config = require(shared:WaitForChild("Config"))
+local packService = require(script.Parent:WaitForChild("PackService"))
 
 local remotes = ReplicatedStorage:FindFirstChild("SIGameRemotes") or Instance.new("Folder")
 remotes.Name = "SIGameRemotes"
@@ -17,6 +18,7 @@ end
 
 local stateChanged = remote("StateChanged")
 local action = remote("Action")
+local catalogResult = remote("CatalogResult")
 
 local demoQuestions = {
     { id = "demo-1", category = "Мемы", value = 100, text = "Кто обычно говорит: 'это база'?", answer = "интернет", answered = false },
@@ -38,6 +40,7 @@ local state = {
     itemDisabled = {},
     pitUntil = {},
 }
+local installInProgress = false
 
 local function snapshot()
     local players = {}
@@ -74,6 +77,28 @@ local function findQuestion(id: string)
         end
     end
     return nil
+end
+
+local function applyPack(pack)
+    local questions = {}
+    for index, source in pack.questions or {} do
+        table.insert(questions, {
+            id = tostring(source.id or (pack.id .. "-" .. index)),
+            category = tostring(source.category or "Новый пак"),
+            value = tonumber(source.value) or index * 100,
+            text = tostring(source.text or "Вопрос без текста"),
+            answer = tostring(source.answer or ""),
+            answered = false,
+        })
+    end
+    if #questions == 0 then
+        return false
+    end
+    state.packId = tostring(pack.id or "unknown-pack")
+    state.questions = questions
+    state.selectedQuestionId = nil
+    state.phase = "board"
+    return true
 end
 
 local function sendToPit(player: Player)
@@ -124,6 +149,43 @@ local function handleAction(player: Player, payload)
             state.roles[player.UserId] = "player"
             broadcast()
         end
+    elseif payload.type == "searchCatalog" then
+        task.spawn(function()
+            local success, result = packService.Search(
+                tostring(payload.query or ""),
+                tostring(payload.tag or ""),
+                tostring(payload.sort or "popular")
+            )
+            catalogResult:FireClient(player, {
+                type = "search",
+                success = success,
+                items = success and result.items or {},
+                error = success and nil or result.error,
+            })
+        end)
+    elseif payload.type == "installPack" and state.phase == "lobby" and not installInProgress then
+        local workshopId = tostring(payload.workshopId or "")
+        if not string.match(workshopId, "^%d+$") then
+            catalogResult:FireClient(player, { type = "installStatus", status = "failed", error = "Неверный ID пака" })
+            return
+        end
+        installInProgress = true
+        catalogResult:FireAllClients({ type = "installStatus", status = "downloading", workshopId = workshopId })
+        task.spawn(function()
+            local success, result = packService.Install(workshopId)
+            if success and result.pack and applyPack(result.pack) then
+                catalogResult:FireAllClients({ type = "installStatus", status = "ready", workshopId = workshopId, title = result.pack.title })
+                broadcast()
+            else
+                catalogResult:FireAllClients({
+                    type = "installStatus",
+                    status = "failed",
+                    workshopId = workshopId,
+                    error = success and "В паке не найдено игровых вопросов" or result.error,
+                })
+            end
+            installInProgress = false
+        end)
     elseif payload.type == "useItem" then
         local itemId = tostring(payload.itemId or "")
         if state.itemDisabled[player.UserId] then
