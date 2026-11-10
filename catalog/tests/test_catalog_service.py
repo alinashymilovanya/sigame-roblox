@@ -2,7 +2,7 @@ import io
 import zipfile
 import unittest
 
-from catalog_service import parse_siq
+from catalog.catalog_service import parse_siq
 
 
 class CatalogImportTests(unittest.TestCase):

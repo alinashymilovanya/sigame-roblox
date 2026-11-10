@@ -9,5 +9,6 @@ catalog/storage/
 node_modules/
 dist/
 build/
+.tools/
 .vscode/settings.json
 
