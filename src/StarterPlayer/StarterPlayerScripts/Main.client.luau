@@ -34,6 +34,45 @@ backdrop.Size = UDim2.fromScale(1, 1)
 backdrop.BackgroundColor3 = Color3.fromRGB(35, 22, 24)
 backdrop.Parent = gui
 
+local rolePanel = Instance.new("Frame")
+rolePanel.AnchorPoint = Vector2.new(0.5, 0.5)
+rolePanel.Position = UDim2.fromScale(0.5, 0.5)
+rolePanel.Size = UDim2.fromScale(0.42, 0.34)
+rolePanel.BackgroundColor3 = Color3.fromRGB(62, 34, 36)
+rounded(rolePanel, 20)
+rolePanel.Visible = false
+rolePanel.Parent = backdrop
+
+local roleTitle = label(rolePanel, "КТО ТЫ В ЭТОЙ ИГРЕ?", 24, Color3.fromRGB(255, 230, 191))
+roleTitle.Position = UDim2.fromScale(0.08, 0.1)
+roleTitle.Size = UDim2.fromScale(0.84, 0.2)
+
+local roleHint = label(rolePanel, "Выбери роль перед началом партии", 15, Color3.fromRGB(225, 187, 157))
+roleHint.Position = UDim2.fromScale(0.08, 0.28)
+roleHint.Size = UDim2.fromScale(0.84, 0.15)
+
+local function roleButton(text: string, position: UDim2)
+    local button = Instance.new("TextButton")
+    button.Text = text
+    button.TextSize = 18
+    button.TextColor3 = Color3.fromRGB(255, 241, 214)
+    button.BackgroundColor3 = Color3.fromRGB(171, 74, 55)
+    button.Size = UDim2.fromScale(0.38, 0.27)
+    button.Position = position
+    rounded(button, 12)
+    button.Parent = rolePanel
+    return button
+end
+
+local playerRoleButton = roleButton("ИГРОК", UDim2.fromScale(0.08, 0.58))
+local hostRoleButton = roleButton("ВЕДУЩИЙ", UDim2.fromScale(0.54, 0.58))
+playerRoleButton.Activated:Connect(function()
+    action:FireServer({ type = "chooseRole", role = "player" })
+end)
+hostRoleButton.Activated:Connect(function()
+    action:FireServer({ type = "chooseRole", role = "host" })
+end)
+
 local header = Instance.new("Frame")
 header.Size = UDim2.fromScale(1, 0.1)
 header.BackgroundColor3 = Color3.fromRGB(68, 35, 34)
@@ -114,6 +153,18 @@ end
 
 local function render(state)
     local host = state.hostUserId == player.UserId
+    local role = state.roles and state.roles[player.UserId]
+    rolePanel.Visible = role == "undecided"
+    if state.hostUserId ~= 0 and role == "undecided" then
+        roleHint.Text = "Ведущий уже выбран — можно зайти игроком"
+        hostRoleButton.BackgroundColor3 = Color3.fromRGB(100, 68, 60)
+    else
+        roleHint.Text = "Выбери роль перед началом партии"
+        hostRoleButton.BackgroundColor3 = Color3.fromRGB(171, 74, 55)
+    end
+    if rolePanel.Visible then
+        return
+    end
     local modal = board:FindFirstChild("QuestionModal")
     if state.selectedQuestionId then
         local question

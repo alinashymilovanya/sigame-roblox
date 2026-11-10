@@ -27,6 +27,7 @@ local demoQuestions = {
 
 local state = {
     hostUserId = 0,
+    roles = {},
     packId = config.DemoPackId,
     phase = "lobby",
     selectedQuestionId = nil,
@@ -50,6 +51,7 @@ local function snapshot()
         selectedQuestionId = state.selectedQuestionId,
         scores = state.scores,
         players = players,
+        roles = state.roles,
         questions = state.questions,
         muted = state.muted,
         itemDisabled = state.itemDisabled,
@@ -109,11 +111,17 @@ local function handleAction(player: Player, payload)
             state.scores[targetId] = (state.scores[targetId] or 0) + delta
             broadcast()
         end
-    elseif payload.type == "transferHost" and isHost(player) then
-        local nextHostId = tonumber(payload.userId)
-        local nextHost = nextHostId and Players:GetPlayerByUserId(nextHostId)
-        if nextHost then
-            state.hostUserId = nextHost.UserId
+    elseif payload.type == "chooseRole" and state.phase == "lobby" then
+        local role = tostring(payload.role or "")
+        if role == "host" and (state.hostUserId == 0 or state.hostUserId == player.UserId) then
+            state.hostUserId = player.UserId
+            state.roles[player.UserId] = "host"
+            broadcast()
+        elseif role == "player" then
+            if state.hostUserId == player.UserId then
+                state.hostUserId = 0
+            end
+            state.roles[player.UserId] = "player"
             broadcast()
         end
     elseif payload.type == "useItem" then
@@ -151,18 +159,16 @@ local function handleAction(player: Player, payload)
 end
 
 Players.PlayerAdded:Connect(function(player)
-    if state.hostUserId == 0 then
-        state.hostUserId = player.UserId
-    end
+    state.roles[player.UserId] = "undecided"
     state.scores[player.UserId] = state.scores[player.UserId] or 0
     broadcast()
 end)
 
 Players.PlayerRemoving:Connect(function(player)
     if player.UserId == state.hostUserId then
-        local nextHost = Players:GetPlayers()[1]
-        state.hostUserId = nextHost and nextHost.UserId or 0
+        state.hostUserId = 0
     end
+    state.roles[player.UserId] = nil
     broadcast()
 end)
 
