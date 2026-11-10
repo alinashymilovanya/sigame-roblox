@@ -109,6 +109,13 @@ local function handleAction(player: Player, payload)
             state.scores[targetId] = (state.scores[targetId] or 0) + delta
             broadcast()
         end
+    elseif payload.type == "transferHost" and isHost(player) then
+        local nextHostId = tonumber(payload.userId)
+        local nextHost = nextHostId and Players:GetPlayerByUserId(nextHostId)
+        if nextHost then
+            state.hostUserId = nextHost.UserId
+            broadcast()
+        end
     elseif payload.type == "useItem" then
         local itemId = tostring(payload.itemId or "")
         if state.itemDisabled[player.UserId] then
