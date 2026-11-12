@@ -22,6 +22,9 @@ STEAM_DETAILS_URL = "https://api.steampowered.com/ISteamRemoteStorage/GetPublish
 STEAM_QUERY_URL = "https://api.steampowered.com/IPublishedFileService/QueryFiles/v1/"
 STEAM_BROWSE_URL = "https://steamcommunity.com/workshop/browse/?appid=3553500&section=readytouseitems&days=90"
 ID_RE = re.compile(r"(?:publishedfileid|sharedfiles/filedetails/\?id=)[^0-9]{0,30}([0-9]{6,20})")
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_STEAMCMD = PROJECT_ROOT / ".tools" / "steamcmd" / ("steamcmd.exe" if os.name == "nt" else "steamcmd.sh")
+DEFAULT_STEAMCMD_WORKDIR = PROJECT_ROOT / ".tools" / "steamcmd-workshop"
 
 
 def normalize_workshop_detail(detail: dict) -> dict:
@@ -81,8 +84,10 @@ class SteamWorkshopClient:
         self.api_key = api_key or os.environ.get("STEAM_WEB_API_KEY", "")
         self.opener = opener
         self.app_id = app_id
-        self.steamcmd_path = steamcmd_path or os.environ.get("STEAMCMD_PATH", "")
-        self.workdir = Path(workdir or os.environ.get("STEAMCMD_WORKDIR", "catalog/storage/steamcmd"))
+        configured_steamcmd = steamcmd_path or os.environ.get("STEAMCMD_PATH", "")
+        self.steamcmd_path = configured_steamcmd or (str(DEFAULT_STEAMCMD) if DEFAULT_STEAMCMD.exists() else "")
+        configured_workdir = workdir or os.environ.get("STEAMCMD_WORKDIR", "")
+        self.workdir = Path(configured_workdir or (DEFAULT_STEAMCMD_WORKDIR if self.steamcmd_path else "catalog/storage/steamcmd"))
 
     def _post_json(self, url: str, values: dict[str, str]) -> dict:
         body = urllib.parse.urlencode(values).encode("utf-8")
@@ -135,10 +140,14 @@ class SteamWorkshopClient:
         if not self.steamcmd_path:
             raise RuntimeError("STEAMCMD_PATH is not configured")
         self.workdir.mkdir(parents=True, exist_ok=True)
+        steam_user = os.environ.get("STEAMCMD_USER", "")
+        if steam_user and not os.environ.get("STEAMCMD_PASSWORD", ""):
+            raise RuntimeError("STEAMCMD_PASSWORD is required when STEAMCMD_USER is set")
+        login_args = ["+login", "anonymous"] if not steam_user else ["+login", steam_user, os.environ["STEAMCMD_PASSWORD"]]
         command = [
             self.steamcmd_path,
             "+force_install_dir", str(self.workdir),
-            "+login", "anonymous",
+            *login_args,
             "+workshop_download_item", str(self.app_id), workshop_id,
             "+quit",
         ]

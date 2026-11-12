@@ -33,7 +33,7 @@ uv run --python 3.11 python -m catalog.catalog_service
 - `GET /workshop/search?q=...&tag=...` — каталог с официальными метаданными Steam Workshop;
 - `POST /workshop/install` с `{ "workshopId": "..." }` — скачивание пака через серверный SteamCMD-воркер, проверка `.siq` и импорт.
 
-Для установки из Workshop нужен серверный SteamCMD и переменные окружения `STEAMCMD_PATH`, `STEAMCMD_WORKDIR`. `STEAM_WEB_API_KEY` необязателен: с ним поиск использует `IPublishedFileService`, без него включается публичный browse-fallback. В опубликованной Roblox-игре `Config.CatalogUrl` должен указывать на доступный по HTTPS backend, а HTTP Requests должны быть включены в настройках опыта.
+Для установки из Workshop backend автоматически использует `.tools/steamcmd/steamcmd.exe`, если он есть; иначе можно задать `STEAMCMD_PATH` и `STEAMCMD_WORKDIR`. `STEAM_WEB_API_KEY` необязателен: с ним поиск использует `IPublishedFileService`, без него включается публичный browse-fallback. Для паков, закрытых для anonymous download, задаются `STEAMCMD_USER` и `STEAMCMD_PASSWORD` только в окружении процесса — в репозиторий они не попадают. В опубликованной Roblox-игре `Config.CatalogUrl` должен указывать на доступный по HTTPS backend, а HTTP Requests должны быть включены в настройках опыта.
 
 ## Roblox-разработка
 
