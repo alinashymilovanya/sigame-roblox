@@ -106,6 +106,7 @@ local function applyPack(pack)
             value = tonumber(source.value) or index * 100,
             kind = tostring(source.kind or "text"),
             choices = source.choices,
+            media = source.media or {},
             text = tostring(source.text or "Вопрос без текста"),
             answer = tostring(source.answer or ""),
             answered = false,

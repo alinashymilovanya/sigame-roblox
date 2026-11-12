@@ -1,10 +1,25 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("SIGameRemotes")
 local stateChanged = remotes:WaitForChild("StateChanged") :: RemoteEvent
 local action = remotes:WaitForChild("Action") :: RemoteEvent
+local worldQuestionGui: BillboardGui?
+local worldQuestionText: TextLabel?
+
+task.spawn(function()
+    local lounge = Workspace:WaitForChild("SIGameLounge", 15)
+    local display = lounge and lounge:WaitForChild("QuestionDisplay", 15)
+    local gui = display and display:FindFirstChild("WorldQuestionGui")
+    local card = gui and gui:FindFirstChild("Frame")
+    local label = card and card:FindFirstChild("QuestionText")
+    if gui and label and label:IsA("TextLabel") then
+        worldQuestionGui = gui :: BillboardGui
+        worldQuestionText = label
+    end
+end)
 
 local COLORS = {
     ink = Color3.fromRGB(255, 239, 209),
@@ -245,6 +260,14 @@ local function showToast(message: string)
     end)
 end
 
+local function updateWorldQuestion(question)
+    if not worldQuestionGui or not worldQuestionText then return end
+    worldQuestionGui.Enabled = question ~= nil
+    if question then
+        worldQuestionText.Text = question.text
+    end
+end
+
 local function renderScores(state)
     clear(scoreList)
     for _, person in state.players do
@@ -424,8 +447,12 @@ local function render(state)
     clear(cellsLayer)
     if state.selectedQuestionId then
         local question = findQuestion(state.selectedQuestionId)
-        if question then renderQuestion(state, question, isHost) end
+        if question then
+            updateWorldQuestion(question)
+            renderQuestion(state, question, isHost)
+        end
     else
+        updateWorldQuestion(nil)
         renderBoard(state)
     end
     if state.actionFeed and state.actionFeed.text then showToast(state.actionFeed.text) end

@@ -52,6 +52,45 @@ part("RightWall", Vector3.new(1, 18, 38), Vector3.new(28, 8, 0), Color3.fromRGB(
 local tableTop = part("Table", Vector3.new(20, 1, 9), Vector3.new(0, 2.8, 0), Color3.fromRGB(106, 54, 42), Enum.Material.Wood)
 tableTop.Shape = Enum.PartType.Block
 part("TableRug", Vector3.new(24, 0.15, 13), Vector3.new(0, 0.05, 0), Color3.fromRGB(92, 47, 51), Enum.Material.Fabric)
+local display = part("QuestionDisplay", Vector3.new(12, 0.35, 0.35), Vector3.new(0, 6.4, 0), Color3.fromRGB(143, 62, 57), Enum.Material.Neon)
+local displayGui = Instance.new("BillboardGui")
+displayGui.Name = "WorldQuestionGui"
+displayGui.Size = UDim2.fromOffset(720, 190)
+displayGui.StudsOffset = Vector3.new(0, 0.2, 0)
+displayGui.AlwaysOnTop = true
+displayGui.MaxDistance = 120
+displayGui.Enabled = false
+displayGui.Adornee = display
+displayGui.Parent = display
+local displayCard = Instance.new("Frame")
+displayCard.Size = UDim2.fromScale(1, 1)
+displayCard.BackgroundColor3 = Color3.fromRGB(48, 27, 33)
+displayCard.BackgroundTransparency = 0.04
+displayCard.Parent = displayGui
+local displayCorner = Instance.new("UICorner")
+displayCorner.CornerRadius = UDim.new(0, 18)
+displayCorner.Parent = displayCard
+local displayText = Instance.new("TextLabel")
+displayText.Name = "QuestionText"
+displayText.Size = UDim2.fromScale(0.9, 0.72)
+displayText.Position = UDim2.fromScale(0.05, 0.14)
+displayText.BackgroundTransparency = 1
+displayText.Text = ""
+displayText.TextColor3 = Color3.fromRGB(255, 239, 209)
+displayText.TextScaled = true
+displayText.TextWrapped = true
+displayText.Font = Enum.Font.GothamBold
+displayText.Parent = displayCard
+local displayHint = Instance.new("TextLabel")
+displayHint.Name = "QuestionHint"
+displayHint.Size = UDim2.fromScale(0.9, 0.18)
+displayHint.Position = UDim2.fromScale(0.05, 0.78)
+displayHint.BackgroundTransparency = 1
+displayHint.Text = "ВОПРОС НА СТОЛЕ"
+displayHint.TextColor3 = Color3.fromRGB(244, 190, 93)
+displayHint.TextScaled = true
+displayHint.Font = Enum.Font.GothamBold
+displayHint.Parent = displayCard
 part("HostDesk", Vector3.new(8, 1.2, 3.5), Vector3.new(0, 2.5, -8.2), Color3.fromRGB(117, 61, 46), Enum.Material.Wood)
 part("HostBack", Vector3.new(7, 4, 0.7), Vector3.new(0, 4.5, -9.6), Color3.fromRGB(76, 39, 43), Enum.Material.Fabric)
 
