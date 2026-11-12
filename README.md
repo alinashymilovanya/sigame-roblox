@@ -51,6 +51,19 @@ uv run --python 3.11 python -m unittest discover -s catalog/tests -v
 
 Реальный multi-client playtest всё ещё нужно провести в Roblox Studio.
 
+## Быстрый запуск сегодня вечером
+
+1. Открой `.tools/SIGameLounge_Final.rbxl` в Roblox Studio.
+2. Нажми Play и выбери роль «Ведущий» или «Игрок».
+3. Открой «ПАКИ • КАТАЛОГ». Без backend сразу доступен встроенный demo-пак; ведущий может выбрать его, а игроки — предложить и проголосовать.
+4. Для реального Workshop-каталога в отдельном PowerShell окне выполни:
+
+```powershell
+uv run --python 3.11 python -m catalog.catalog_service
+```
+
+5. Включи `Allow HTTP requests` в Experience Settings Roblox Studio, если нужен внешний Workshop backend.
+
 ## Визуальные референсы
 
 - [Лаунж и рассадка ведущего](art/lounge-concept.png)
