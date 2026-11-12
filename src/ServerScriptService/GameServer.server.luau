@@ -124,6 +124,15 @@ local function sendToPit(player: Player)
     end
 end
 
+local function firstOtherPlayer(player: Player): Player?
+    for _, candidate in Players:GetPlayers() do
+        if candidate ~= player then
+            return candidate
+        end
+    end
+    return nil
+end
+
 local function handleAction(player: Player, payload)
     if type(payload) ~= "table" or type(payload.type) ~= "string" then
         return
@@ -245,7 +254,7 @@ local function handleAction(player: Player, payload)
             return
         end
         if itemId == "tomato" or itemId == "poop" or itemId == "confetti" then
-            local target = Players:GetPlayerByUserId(tonumber(payload.targetUserId) or 0)
+            local target = Players:GetPlayerByUserId(tonumber(payload.targetUserId) or 0) or firstOtherPlayer(player)
             if target and target ~= player then
                 state.actionFeed = { text = player.DisplayName .. " бросил " .. itemId .. " в " .. target.DisplayName, kind = "item" }
                 broadcast()

@@ -139,6 +139,27 @@ local scoreLayout = Instance.new("UIListLayout")
 scoreLayout.Padding = UDim.new(0, 6)
 scoreLayout.Parent = scoreList
 
+local hostTools = rounded(Instance.new("Frame"), 12, COLORS.surface2)
+hostTools.Position = UDim2.fromScale(0.06, 0.63)
+hostTools.Size = UDim2.fromScale(0.88, 0.32)
+hostTools.BackgroundColor3 = Color3.fromRGB(48, 27, 33)
+hostTools.Visible = false
+hostTools.Parent = side
+local hostToolsTitle = text(hostTools, "МОДЕРАЦИЯ", 11, COLORS.gold)
+hostToolsTitle.Position = UDim2.fromScale(0.06, 0.06)
+hostToolsTitle.Size = UDim2.fromScale(0.88, 0.16)
+local hostList = Instance.new("ScrollingFrame")
+hostList.BackgroundTransparency = 1
+hostList.BorderSizePixel = 0
+hostList.Position = UDim2.fromScale(0.04, 0.23)
+hostList.Size = UDim2.fromScale(0.92, 0.7)
+hostList.CanvasSize = UDim2.fromScale(0, 0)
+hostList.ScrollBarThickness = 2
+hostList.Parent = hostTools
+local hostLayout = Instance.new("UIListLayout")
+hostLayout.Padding = UDim.new(0, 4)
+hostLayout.Parent = hostList
+
 local services = rounded(Instance.new("Frame"), 16, COLORS.surface2)
 services.AnchorPoint = Vector2.new(0, 1)
 services.Position = UDim2.fromScale(0.035, 0.95)
@@ -240,6 +261,33 @@ local function renderScores(state)
         score.TextXAlignment = Enum.TextXAlignment.Right
     end
     scoreList.CanvasSize = UDim2.new(0, 0, 0, scoreLayout.AbsoluteContentSize.Y + 8)
+end
+
+local function renderHostTools(state)
+    hostTools.Visible = state.hostUserId == player.UserId
+    if not hostTools.Visible then return end
+    clear(hostList)
+    for _, person in state.players do
+        if person.userId ~= player.UserId then
+            local row = rounded(Instance.new("Frame"), 7)
+            row.Size = UDim2.new(1, -4, 0, 30)
+            row.BackgroundColor3 = COLORS.surface2
+            row.Parent = hostList
+            local name = text(row, person.name, 10, COLORS.ink, false)
+            name.Position = UDim2.fromScale(0.04, 0.15)
+            name.Size = UDim2.fromScale(0.32, 0.7)
+            local mute = button(row, "ТШ", COLORS.surface, UDim2.fromScale(0.18, 0.72), UDim2.fromScale(0.38, 0.14))
+            mute.TextSize = 10
+            mute.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "mute" }) end)
+            local pit = button(row, "ЯМА", COLORS.danger, UDim2.fromScale(0.22, 0.72), UDim2.fromScale(0.58, 0.14))
+            pit.TextSize = 10
+            pit.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "pit" }) end)
+            local kick = button(row, "OUT", COLORS.accent, UDim2.fromScale(0.18, 0.72), UDim2.fromScale(0.8, 0.14))
+            kick.TextSize = 10
+            kick.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "kick" }) end)
+        end
+    end
+    hostList.CanvasSize = UDim2.new(0, 0, 0, hostLayout.AbsoluteContentSize.Y + 4)
 end
 
 local function renderBoard(state)
@@ -372,6 +420,7 @@ local function render(state)
     end
     phaseLabel.Text = state.phase == "question" and (isHost and "ВЕДУЩИЙ • ПРОВЕРКА" or "ВОПРОС ОТКРЫТ") or "ЛОББИ • " .. tostring(#state.players) .. " В ЗАЛЕ"
     renderScores(state)
+    renderHostTools(state)
     clear(cellsLayer)
     if state.selectedQuestionId then
         local question = findQuestion(state.selectedQuestionId)
