@@ -201,7 +201,7 @@ local function renderItems(items)
         local proposal = currentState.proposals and currentState.proposals[tostring(item.workshopId)]
         local voteCount = 0
         if proposal and proposal.votes then
-            for voted in proposal.votes do
+            for _, voted in proposal.votes do
                 if voted then voteCount += 1 end
             end
         end
