@@ -388,7 +388,7 @@ local function renderQuestion(state, question, isHost)
             image.ScaleType = Enum.ScaleType.Fit
             image.ZIndex = 6
             image.Parent = modal
-        elseif media.kind == "sound" then
+        elseif media.kind == "sound" or media.kind == "audio" then
             local sound = Instance.new("Sound")
             sound.SoundId = assetId
             sound.Volume = 0.55

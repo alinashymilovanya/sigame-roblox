@@ -27,7 +27,7 @@ local catalogResult = remote("CatalogResult")
 local demoQuestions = {
     { id = "demo-1", category = "Мемы", value = 100, kind = "text", text = "Кто обычно говорит: «это база»?", answer = "интернет", answered = false },
     { id = "demo-2", category = "Игры", value = 100, kind = "choice", choices = { "Ведущий", "Игрок", "Официант" }, text = "Как называется роль, которая открывает вопросы?", answer = "ведущий", answered = false },
-    { id = "demo-3", category = "Дота", value = 200, kind = "text", text = "Какой предмет чаще всего покупают на первую сотню?", answer = "вопрос для пака", answered = false },
+    { id = "demo-3", category = "Дота", value = 200, kind = "text", text = "Какой предмет чаще всего покупают на первую сотню?", answer = "вопрос для пака", media = { { kind = "image", path = "sigame-lounge-render.png", assetId = "rbxassetid://77893087418203" } }, answered = false },
     { id = "demo-4", category = "Компания", value = 300, kind = "choice", choices = { "Да", "Нет" }, text = "Кто из игроков сейчас первым кинет помидор?", answer = "да", answered = false },
 }
 
