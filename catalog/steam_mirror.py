@@ -25,6 +25,7 @@ ID_RE = re.compile(r"(?:publishedfileid|sharedfiles/filedetails/\?id=)[^0-9]{0,3
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_STEAMCMD = PROJECT_ROOT / ".tools" / "steamcmd" / ("steamcmd.exe" if os.name == "nt" else "steamcmd.sh")
 DEFAULT_STEAMCMD_WORKDIR = PROJECT_ROOT / ".tools" / "steamcmd-workshop"
+MAX_DIRECT_DOWNLOAD_BYTES = 100 * 1024 * 1024
 
 
 def normalize_workshop_detail(detail: dict) -> dict:
@@ -37,6 +38,9 @@ def normalize_workshop_detail(detail: dict) -> dict:
         "description": str(detail.get("description", ""))[:2000],
         "sizeBytes": int(detail.get("file_size", 0) or 0),
         "previewUrl": str(detail.get("preview_url", "")),
+        "fileUrl": str(detail.get("file_url", "")),
+        "filename": str(detail.get("filename", "")),
+        "hcontentFile": str(detail.get("hcontent_file", "")),
         "subscriptions": int(detail.get("subscriptions", 0) or 0),
         "updatedAt": int(detail.get("time_updated", 0) or 0),
         "tags": tags,
@@ -137,9 +141,28 @@ class SteamWorkshopClient:
     def download_item(self, workshop_id: str) -> Path:
         if not workshop_id.isdigit():
             raise ValueError("workshopId must contain digits only")
+        self.workdir.mkdir(parents=True, exist_ok=True)
+        try:
+            details = self.get_details([workshop_id])
+        except Exception:
+            details = []
+        if details and details[0].get("fileUrl"):
+            item_path = self.workdir / workshop_id
+            item_path.mkdir(parents=True, exist_ok=True)
+            filename = Path(details[0].get("filename") or "pack.siq").name
+            destination = item_path / (filename or "pack.siq")
+            request = urllib.request.Request(
+                details[0]["fileUrl"],
+                headers={"User-Agent": "SIGameLounge/0.1"},
+            )
+            with self.opener(request, timeout=60) as response:
+                raw = response.read(MAX_DIRECT_DOWNLOAD_BYTES + 1)
+            if len(raw) > MAX_DIRECT_DOWNLOAD_BYTES:
+                raise ValueError("Workshop file is larger than 100 MiB")
+            destination.write_bytes(raw)
+            return item_path
         if not self.steamcmd_path:
             raise RuntimeError("STEAMCMD_PATH is not configured")
-        self.workdir.mkdir(parents=True, exist_ok=True)
         steam_user = os.environ.get("STEAMCMD_USER", "")
         if steam_user and not os.environ.get("STEAMCMD_PASSWORD", ""):
             raise RuntimeError("STEAMCMD_PASSWORD is required when STEAMCMD_USER is set")
