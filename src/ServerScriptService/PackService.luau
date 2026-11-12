@@ -6,6 +6,9 @@ local config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local PackService = {}
 
 local function request(path: string, method: string, body): (boolean, any)
+    if not HttpService.HttpEnabled then
+        return false, { error = "HTTP requests are disabled; using the built-in demo catalog" }
+    end
     local options = {
         Url = config.CatalogUrl .. path,
         Method = method,

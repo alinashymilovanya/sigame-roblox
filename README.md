@@ -22,10 +22,10 @@
 
 ## Локальный каталог паков и Steam Workshop
 
-Нужен Python 3.11+.
+Нужен `uv` (он сам подтянет Python 3.11; отдельная установка Python не требуется).
 
 ```powershell
-python catalog/catalog_service.py
+uv run --python 3.11 python -m catalog.catalog_service
 ```
 
 Сервис запускается на `http://127.0.0.1:8787`, принимает `.siq` через `POST /packs/import`, а также даёт Roblox два маршрута:
@@ -41,6 +41,12 @@ python catalog/catalog_service.py
 
 ```powershell
 .tools\rojo\rojo.exe build default.project.json -o .tools\SIGameLounge.rbxlx
+```
+
+Проверка импортёра и форматов SIQ:
+
+```powershell
+uv run --python 3.11 python -m unittest discover -s catalog/tests -v
 ```
 
 Реальный multi-client playtest всё ещё нужно провести в Roblox Studio.
