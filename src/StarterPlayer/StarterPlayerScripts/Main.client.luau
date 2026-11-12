@@ -298,14 +298,17 @@ local function renderHostTools(state)
             row.Parent = hostList
             local name = text(row, person.name, 10, COLORS.ink, false)
             name.Position = UDim2.fromScale(0.04, 0.15)
-            name.Size = UDim2.fromScale(0.32, 0.7)
-            local mute = button(row, "ТШ", COLORS.surface, UDim2.fromScale(0.18, 0.72), UDim2.fromScale(0.38, 0.14))
+            name.Size = UDim2.fromScale(0.28, 0.7)
+            local mute = button(row, "ТШ", COLORS.surface, UDim2.fromScale(0.15, 0.72), UDim2.fromScale(0.32, 0.14))
             mute.TextSize = 10
             mute.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "mute" }) end)
-            local pit = button(row, "ЯМА", COLORS.danger, UDim2.fromScale(0.22, 0.72), UDim2.fromScale(0.58, 0.14))
+            local itemsOff = button(row, "МЕМ", COLORS.surface, UDim2.fromScale(0.15, 0.72), UDim2.fromScale(0.49, 0.14))
+            itemsOff.TextSize = 10
+            itemsOff.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "items" }) end)
+            local pit = button(row, "ЯМА", COLORS.danger, UDim2.fromScale(0.16, 0.72), UDim2.fromScale(0.66, 0.14))
             pit.TextSize = 10
             pit.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "pit" }) end)
-            local kick = button(row, "OUT", COLORS.accent, UDim2.fromScale(0.18, 0.72), UDim2.fromScale(0.8, 0.14))
+            local kick = button(row, "OUT", COLORS.accent, UDim2.fromScale(0.15, 0.72), UDim2.fromScale(0.84, 0.14))
             kick.TextSize = 10
             kick.Activated:Connect(function() action:FireServer({ type = "moderate", userId = person.userId, moderation = "kick" }) end)
         end
@@ -362,6 +365,27 @@ local function renderQuestion(state, question, isHost)
     questionText.Position = UDim2.fromScale(0.06, 0.17)
     questionText.Size = UDim2.fromScale(0.88, 0.26)
     questionText.ZIndex = 6
+    local media = question.media and question.media[1]
+    if media and media.assetId then
+        local assetId = tostring(media.assetId)
+        if not string.find(assetId, "rbxassetid://", 1, true) then assetId = "rbxassetid://" .. assetId end
+        if media.kind == "image" then
+            local image = Instance.new("ImageLabel")
+            image.BackgroundTransparency = 1
+            image.Image = assetId
+            image.Size = UDim2.fromScale(0.36, 0.2)
+            image.Position = UDim2.fromScale(0.32, 0.42)
+            image.ScaleType = Enum.ScaleType.Fit
+            image.ZIndex = 6
+            image.Parent = modal
+        elseif media.kind == "sound" then
+            local sound = Instance.new("Sound")
+            sound.SoundId = assetId
+            sound.Volume = 0.55
+            sound.Parent = modal
+            sound:Play()
+        end
+    end
     if isHost then
         local info = text(modal, "ОТВЕТЫ ИГРОКОВ", 13, COLORS.muted)
         info.Position = UDim2.fromScale(0.06, 0.47)

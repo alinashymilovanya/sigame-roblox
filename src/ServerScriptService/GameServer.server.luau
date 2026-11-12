@@ -1,5 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
+local Workspace = game:GetService("Workspace")
 
 local shared = ReplicatedStorage:FindFirstChild("Shared")
 local config = require(shared:WaitForChild("Config"))
@@ -138,6 +140,23 @@ local function firstOtherPlayer(player: Player): Player?
         end
     end
     return nil
+end
+
+local function throwMemeItem(itemId: string, source: Player, target: Player)
+    local sourceRoot = source.Character and source.Character:FindFirstChild("HumanoidRootPart")
+    local targetRoot = target.Character and target.Character:FindFirstChild("HumanoidRootPart")
+    if not sourceRoot or not targetRoot then return end
+    local projectile = Instance.new("Part")
+    projectile.Name = "MemeProjectile"
+    projectile.Shape = Enum.PartType.Ball
+    projectile.Size = itemId == "poop" and Vector3.new(1.4, 1.4, 1.4) or Vector3.new(1, 1, 1)
+    projectile.Color = itemId == "tomato" and Color3.fromRGB(214, 67, 54) or itemId == "poop" and Color3.fromRGB(91, 55, 35) or Color3.fromRGB(245, 190, 84)
+    projectile.Material = Enum.Material.SmoothPlastic
+    projectile.CanCollide = false
+    projectile.CFrame = sourceRoot.CFrame + sourceRoot.CFrame.LookVector * 2 + Vector3.new(0, 1.5, 0)
+    projectile.AssemblyLinearVelocity = (targetRoot.Position - projectile.Position).Unit * 42 + Vector3.new(0, 10, 0)
+    projectile.Parent = Workspace
+    Debris:AddItem(projectile, 3)
 end
 
 local function handleAction(player: Player, payload)
@@ -290,6 +309,7 @@ local function handleAction(player: Player, payload)
         if itemId == "tomato" or itemId == "poop" or itemId == "confetti" then
             local target = Players:GetPlayerByUserId(tonumber(payload.targetUserId) or 0) or firstOtherPlayer(player)
             if target and target ~= player then
+                throwMemeItem(itemId, player, target)
                 state.actionFeed = { text = player.DisplayName .. " бросил " .. itemId .. " в " .. target.DisplayName, kind = "item" }
                 broadcast()
             end
