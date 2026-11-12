@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local shared = ReplicatedStorage:FindFirstChild("Shared")
 local config = require(shared:WaitForChild("Config"))
+local roomRules = require(shared:WaitForChild("RoomRules"))
 local packService = require(script.Parent:WaitForChild("PackService"))
 
 local remotes = ReplicatedStorage:FindFirstChild("SIGameRemotes") or Instance.new("Folder")
@@ -21,10 +22,10 @@ local action = remote("Action")
 local catalogResult = remote("CatalogResult")
 
 local demoQuestions = {
-    { id = "demo-1", category = "Мемы", value = 100, text = "Кто обычно говорит: 'это база'?", answer = "интернет", answered = false },
-    { id = "demo-2", category = "Игры", value = 100, text = "Как называется роль ведущего в этой игре?", answer = "ведущий", answered = false },
-    { id = "demo-3", category = "Дота", value = 200, text = "Какой предмет чаще всего покупают на первую сотню?", answer = "вопрос для пака", answered = false },
-    { id = "demo-4", category = "Компания", value = 300, text = "Кто из игроков сейчас первым кинет помидор?", answer = "тот, кто нажмёт кнопку", answered = false },
+    { id = "demo-1", category = "Мемы", value = 100, kind = "text", text = "Кто обычно говорит: «это база»?", answer = "интернет", answered = false },
+    { id = "demo-2", category = "Игры", value = 100, kind = "choice", choices = { "Ведущий", "Игрок", "Официант" }, text = "Как называется роль, которая открывает вопросы?", answer = "ведущий", answered = false },
+    { id = "demo-3", category = "Дота", value = 200, kind = "text", text = "Какой предмет чаще всего покупают на первую сотню?", answer = "вопрос для пака", answered = false },
+    { id = "demo-4", category = "Компания", value = 300, kind = "choice", choices = { "Да", "Нет" }, text = "Кто из игроков сейчас первым кинет помидор?", answer = "да", answered = false },
 }
 
 local state = {
@@ -39,10 +40,18 @@ local state = {
     muted = {},
     itemDisabled = {},
     pitUntil = {},
+    answers = {},
+    itemCooldowns = {},
+    serviceOrders = {},
+    actionFeed = nil,
 }
 local installInProgress = false
 
-local function snapshot()
+local function isHost(player: Player): boolean
+    return player.UserId == state.hostUserId
+end
+
+local function snapshot(viewer: Player)
     local players = {}
     for _, player in Players:GetPlayers() do
         table.insert(players, { userId = player.UserId, name = player.DisplayName, isHost = player.UserId == state.hostUserId })
@@ -59,15 +68,18 @@ local function snapshot()
         muted = state.muted,
         itemDisabled = state.itemDisabled,
         pitUntil = state.pitUntil,
+        answers = isHost(viewer) and state.answers or nil,
+        myAnswer = state.answers[viewer.UserId],
+        serviceOrders = state.serviceOrders,
+        actionFeed = state.actionFeed,
     }
 end
 
 local function broadcast()
-    stateChanged:FireAllClients(snapshot())
-end
-
-local function isHost(player: Player): boolean
-    return player.UserId == state.hostUserId
+    for _, player in Players:GetPlayers() do
+        stateChanged:FireClient(player, snapshot(player))
+    end
+    state.actionFeed = nil
 end
 
 local function findQuestion(id: string)
@@ -86,6 +98,8 @@ local function applyPack(pack)
             id = tostring(source.id or (pack.id .. "-" .. index)),
             category = tostring(source.category or "Новый пак"),
             value = tonumber(source.value) or index * 100,
+            kind = tostring(source.kind or "text"),
+            choices = source.choices,
             text = tostring(source.text or "Вопрос без текста"),
             answer = tostring(source.answer or ""),
             answered = false,
@@ -97,6 +111,7 @@ local function applyPack(pack)
     state.packId = tostring(pack.id or "unknown-pack")
     state.questions = questions
     state.selectedQuestionId = nil
+    state.answers = {}
     state.phase = "board"
     return true
 end
@@ -127,11 +142,37 @@ local function handleAction(player: Player, payload)
             question.answered = true
         end
         state.selectedQuestionId = nil
+        state.answers = {}
         state.phase = "board"
         broadcast()
+    elseif payload.type == "submitAnswer" and state.phase == "question" then
+        local question = findQuestion(state.selectedQuestionId)
+        if question and not isHost(player) and not state.muted[player.UserId] then
+            local answerText = roomRules.sanitizeText(payload.answer, 280)
+            if answerText ~= "" then
+                state.answers[player.UserId] = {
+                    questionId = question.id,
+                    text = answerText,
+                    submittedAt = os.time(),
+                    graded = false,
+                }
+                broadcast()
+            end
+        end
+    elseif payload.type == "gradeAnswer" and isHost(player) then
+        local targetId = tonumber(payload.userId)
+        local answer = targetId and state.answers[targetId]
+        local question = findQuestion(state.selectedQuestionId)
+        if targetId and answer and question and answer.questionId == question.id and not answer.graded then
+            local delta = roomRules.scoreDelta(payload.delta)
+            answer.graded = true
+            answer.correct = delta > 0
+            state.scores[targetId] = (state.scores[targetId] or 0) + delta
+            broadcast()
+        end
     elseif payload.type == "setScore" and isHost(player) then
         local targetId = tonumber(payload.userId)
-        local delta = math.clamp(tonumber(payload.delta) or 0, -1000, 1000)
+        local delta = roomRules.scoreDelta(payload.delta)
         if targetId then
             state.scores[targetId] = (state.scores[targetId] or 0) + delta
             broadcast()
@@ -186,15 +227,27 @@ local function handleAction(player: Player, payload)
             end
             installInProgress = false
         end)
+    elseif payload.type == "orderService" then
+        local service = roomRules.sanitizeText(payload.service, 32)
+        if table.find({ "tea", "coffee", "hookah", "waiter" }, service) then
+            state.serviceOrders[player.UserId] = service
+            state.actionFeed = { text = player.DisplayName .. " заказал " .. service, kind = "service" }
+            broadcast()
+        end
     elseif payload.type == "useItem" then
         local itemId = tostring(payload.itemId or "")
         if state.itemDisabled[player.UserId] then
             return
         end
-        if itemId == "pit" then
+        local allowedItems = { tomato = true, poop = true, confetti = true }
+        local cooldownKey = tostring(player.UserId) .. ":" .. itemId
+        if not allowedItems[itemId] or not roomRules.cooldownReady(state.itemCooldowns, cooldownKey, os.clock(), config.ItemCooldownSeconds) then
+            return
+        end
+        if itemId == "tomato" or itemId == "poop" or itemId == "confetti" then
             local target = Players:GetPlayerByUserId(tonumber(payload.targetUserId) or 0)
             if target and target ~= player then
-                sendToPit(target)
+                state.actionFeed = { text = player.DisplayName .. " бросил " .. itemId .. " в " .. target.DisplayName, kind = "item" }
                 broadcast()
             end
         end
@@ -223,6 +276,7 @@ end
 Players.PlayerAdded:Connect(function(player)
     state.roles[player.UserId] = "undecided"
     state.scores[player.UserId] = state.scores[player.UserId] or 0
+    state.answers[player.UserId] = nil
     broadcast()
 end)
 
@@ -231,6 +285,8 @@ Players.PlayerRemoving:Connect(function(player)
         state.hostUserId = 0
     end
     state.roles[player.UserId] = nil
+    state.answers[player.UserId] = nil
+    state.serviceOrders[player.UserId] = nil
     broadcast()
 end)
 
