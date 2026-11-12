@@ -164,6 +164,43 @@ local function throwMemeItem(itemId: string, source: Player, target: Player)
     Debris:AddItem(projectile, 3)
 end
 
+local function deliverService(service: string, player: Player)
+    local character = player.Character
+    local root = character and character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    local prop = Instance.new("Part")
+    prop.Name = "LoungeService_" .. service .. "_" .. player.UserId
+    prop.Anchored = true
+    prop.CanCollide = false
+    prop.Material = Enum.Material.Neon
+    prop.Shape = service == "hookah" and Enum.PartType.Cylinder or Enum.PartType.Ball
+    prop.Size = service == "hookah" and Vector3.new(0.7, 1.4, 0.7) or Vector3.new(0.9, 0.9, 0.9)
+    prop.Color = service == "tea" and Color3.fromRGB(246, 186, 91)
+        or service == "coffee" and Color3.fromRGB(112, 66, 44)
+        or service == "hookah" and Color3.fromRGB(111, 207, 184)
+        or Color3.fromRGB(255, 125, 91)
+    prop.CFrame = root.CFrame + root.CFrame.LookVector * 2 + Vector3.new(0, 1.6, 0)
+    prop.Parent = Workspace
+    local gui = Instance.new("BillboardGui")
+    gui.Size = UDim2.fromOffset(170, 42)
+    gui.StudsOffset = Vector3.new(0, 1.2, 0)
+    gui.AlwaysOnTop = true
+    gui.Parent = prop
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.fromScale(1, 1)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 239, 209)
+    label.TextStrokeTransparency = 0.4
+    label.TextScaled = true
+    label.Font = Enum.Font.GothamBold
+    label.Text = service == "tea" and "ЧАЙ ДОСТАВЛЕН"
+        or service == "coffee" and "КОФЕ ДОСТАВЛЕН"
+        or service == "hookah" and "КАЛЬЯН ГОТОВ"
+        or "ОФИЦИАНТ УЖЕ ЗДЕСЬ"
+    label.Parent = gui
+    Debris:AddItem(prop, 12)
+end
+
 local function handleAction(player: Player, payload)
     if type(payload) ~= "table" or type(payload.type) ~= "string" then
         return
@@ -315,6 +352,7 @@ local function handleAction(player: Player, payload)
         local service = roomRules.sanitizeText(payload.service, 32)
         if table.find({ "tea", "coffee", "hookah", "waiter" }, service) then
             state.serviceOrders[player.UserId] = service
+            deliverService(service, player)
             state.actionFeed = { text = player.DisplayName .. " заказал " .. service, kind = "service" }
             broadcast()
         end
