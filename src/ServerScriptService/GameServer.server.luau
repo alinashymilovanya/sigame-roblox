@@ -43,9 +43,14 @@ local state = {
     answers = {},
     itemCooldowns = {},
     serviceOrders = {},
+    proposals = {},
     actionFeed = nil,
 }
 local installInProgress = false
+
+local demoCatalog = {
+    { workshopId = "demo-lounge", title = "SIGame Lounge • демо-пак", tags = { "demo", "memes", "dota" }, description = "Встроенный пак для первого запуска без ручной подготовки." },
+}
 
 local function isHost(player: Player): boolean
     return player.UserId == state.hostUserId
@@ -71,6 +76,7 @@ local function snapshot(viewer: Player)
         answers = isHost(viewer) and state.answers or nil,
         myAnswer = state.answers[viewer.UserId],
         serviceOrders = state.serviceOrders,
+        proposals = state.proposals,
         actionFeed = state.actionFeed,
     }
 end
@@ -206,23 +212,50 @@ local function handleAction(player: Player, payload)
                 tostring(payload.tag or ""),
                 tostring(payload.sort or "popular")
             )
+            if not success then
+                success = true
+                result = { items = demoCatalog, offline = true }
+            end
             catalogResult:FireClient(player, {
                 type = "search",
                 success = success,
                 items = success and result.items or {},
                 error = success and nil or result.error,
+                offline = result.offline,
             })
         end)
-    elseif payload.type == "installPack" and state.phase == "lobby" and not installInProgress then
+    elseif payload.type == "proposePack" and state.phase == "lobby" then
         local workshopId = tostring(payload.workshopId or "")
-        if not string.match(workshopId, "^%d+$") then
+        if string.match(workshopId, "^%d+$") or workshopId == "demo-lounge" then
+            local proposal = state.proposals[workshopId] or { title = roomRules.sanitizeText(payload.title, 80), votes = {} }
+            proposal.title = proposal.title ~= "" and proposal.title or "Пак " .. workshopId
+            proposal.votes[player.UserId] = true
+            state.proposals[workshopId] = proposal
+            state.actionFeed = { text = player.DisplayName .. " предложил пак «" .. proposal.title .. "»", kind = "catalog" }
+            broadcast()
+        end
+    elseif payload.type == "votePack" and state.phase == "lobby" then
+        local workshopId = tostring(payload.workshopId or "")
+        local proposal = state.proposals[workshopId]
+        if proposal then
+            proposal.votes[player.UserId] = not proposal.votes[player.UserId]
+            broadcast()
+        end
+    elseif payload.type == "installPack" and isHost(player) and state.phase == "lobby" and not installInProgress then
+        local workshopId = tostring(payload.workshopId or "")
+        if not string.match(workshopId, "^%d+$") and workshopId ~= "demo-lounge" then
             catalogResult:FireClient(player, { type = "installStatus", status = "failed", error = "Неверный ID пака" })
             return
         end
         installInProgress = true
         catalogResult:FireAllClients({ type = "installStatus", status = "downloading", workshopId = workshopId })
         task.spawn(function()
-            local success, result = packService.Install(workshopId)
+            local success, result
+            if workshopId == "demo-lounge" then
+                success, result = true, { pack = { id = config.DemoPackId, title = "SIGame Lounge • демо-пак", questions = demoQuestions } }
+            else
+                success, result = packService.Install(workshopId)
+            end
             if success and result.pack and applyPack(result.pack) then
                 catalogResult:FireAllClients({ type = "installStatus", status = "ready", workshopId = workshopId, title = result.pack.title })
                 broadcast()

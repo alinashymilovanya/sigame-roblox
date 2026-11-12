@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("SIGameRemotes")
+local stateChanged = remotes:WaitForChild("StateChanged") :: RemoteEvent
 local action = remotes:WaitForChild("Action") :: RemoteEvent
 local catalogResult = remotes:WaitForChild("CatalogResult") :: RemoteEvent
 
@@ -145,6 +146,9 @@ local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 10)
 layout.Parent = list
 
+local currentState = { hostUserId = 0, proposals = {} }
+local lastItems = {}
+
 local function clearList()
     for _, child in list:GetChildren() do
         if child:IsA("Frame") then
@@ -154,6 +158,7 @@ local function clearList()
 end
 
 local function renderItems(items)
+    lastItems = items
     clearList()
     status.Text = #items == 0 and "Ничего не нашли. Попробуй другой запрос." or ("Найдено паков: " .. #items)
     for _, item in items do
@@ -167,12 +172,22 @@ local function renderItems(items)
         cardTitle.Position = UDim2.fromScale(0.04, 0.12)
         cardTitle.Size = UDim2.fromScale(0.62, 0.27)
 
-        local cardMeta = text(card, table.concat(item.tags or {}, "  •  "), 12, Color3.fromRGB(210, 168, 143))
+        local voteCount = 0
+        if proposal and proposal.votes then
+            for voted in proposal.votes do
+                if voted then voteCount += 1 end
+            end
+        end
+        local meta = table.concat(item.tags or {}, "  •  ")
+        if proposal then meta ..= "  •  голосов: " .. voteCount end
+        local cardMeta = text(card, meta, 12, Color3.fromRGB(210, 168, 143))
         cardMeta.Position = UDim2.fromScale(0.04, 0.48)
         cardMeta.Size = UDim2.fromScale(0.62, 0.25)
 
+        local proposal = currentState.proposals and currentState.proposals[tostring(item.workshopId)]
+        local isHost = currentState.hostUserId == player.UserId
         local install = Instance.new("TextButton")
-        install.Text = "УСТАНОВИТЬ"
+        install.Text = isHost and "ВЫБРАТЬ" or (proposal and "ГОЛОСУЮ" or "ПРЕДЛОЖИТЬ")
         install.TextSize = 13
         install.TextColor3 = Color3.fromRGB(255, 241, 214)
         install.BackgroundColor3 = Color3.fromRGB(188, 76, 56)
@@ -181,13 +196,26 @@ local function renderItems(items)
         rounded(install, 9)
         install.Parent = card
         install.Activated:Connect(function()
-            install.Text = "ЗАГРУЗКА…"
+            install.Text = isHost and "ЗАГРУЗКА…" or "ГОЛОС ЗАПИСАН"
             install.Active = false
-            action:FireServer({ type = "installPack", workshopId = item.workshopId })
+            if isHost then
+                action:FireServer({ type = "installPack", workshopId = item.workshopId })
+            elseif proposal then
+                action:FireServer({ type = "votePack", workshopId = item.workshopId })
+            else
+                action:FireServer({ type = "proposePack", workshopId = item.workshopId, title = item.title })
+            end
         end)
     end
     list.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
 end
+
+stateChanged.OnClientEvent:Connect(function(state)
+    currentState = state
+    if panel.Visible and #lastItems > 0 then
+        renderItems(lastItems)
+    end
+end)
 
 local function searchCatalog()
     status.Text = "Ищем в Steam Workshop…"
@@ -214,6 +242,9 @@ catalogResult.OnClientEvent:Connect(function(payload)
     if payload.type == "search" then
         if payload.success then
             renderItems(payload.items or {})
+            if payload.offline then
+                status.Text = "Локальный демо-каталог: можно играть сразу"
+            end
         else
             status.Text = "Каталог временно недоступен: " .. tostring(payload.error or "ошибка")
         end
