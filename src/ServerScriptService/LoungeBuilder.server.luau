@@ -50,6 +50,11 @@ end
 
 local floor = part("Floor", Vector3.new(56, 1, 38), Vector3.new(0, -0.5, 0), Color3.fromRGB(52, 32, 31), Enum.Material.WoodPlanks)
 floor.CastShadow = false
+part("PitFloor", Vector3.new(14, 1, 14), Vector3.new(0, -18.5, 0), Color3.fromRGB(35, 22, 29), Enum.Material.Concrete)
+part("PitWallBack", Vector3.new(14, 6, 0.6), Vector3.new(0, -15.5, 7), Color3.fromRGB(79, 35, 48), Enum.Material.Brick)
+part("PitWallLeft", Vector3.new(0.6, 6, 14), Vector3.new(-7, -15.5, 0), Color3.fromRGB(79, 35, 48), Enum.Material.Brick)
+part("PitWallRight", Vector3.new(0.6, 6, 14), Vector3.new(7, -15.5, 0), Color3.fromRGB(79, 35, 48), Enum.Material.Brick)
+sign("PitSign", Vector3.new(0, -13.2, 6.65), Vector3.new(7, 1.3, 0.2), "ЯМА • 60 СЕК", Color3.fromRGB(102, 45, 67))
 part("BackWall", Vector3.new(56, 18, 1), Vector3.new(0, 8, 18), Color3.fromRGB(65, 34, 42), Enum.Material.Brick)
 part("LeftWall", Vector3.new(1, 18, 38), Vector3.new(-28, 8, 0), Color3.fromRGB(52, 29, 35), Enum.Material.Brick)
 part("RightWall", Vector3.new(1, 18, 38), Vector3.new(28, 8, 0), Color3.fromRGB(52, 29, 35), Enum.Material.Brick)

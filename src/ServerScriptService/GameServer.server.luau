@@ -134,7 +134,7 @@ local function sendToPit(player: Player)
     state.pitUntil[player.UserId] = os.time() + config.PitSeconds
     local character = player.Character
     if character then
-        character:PivotTo(CFrame.new(0, -18, 0))
+        character:PivotTo(CFrame.new(0, -15, 0))
     end
 end
 
