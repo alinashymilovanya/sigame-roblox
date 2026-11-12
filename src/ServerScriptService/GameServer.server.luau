@@ -48,6 +48,7 @@ local state = {
     itemCooldowns = {},
     serviceOrders = {},
     proposals = {},
+    voteOpen = false,
     actionFeed = nil,
 }
 local installInProgress = false
@@ -82,6 +83,7 @@ local function snapshot(viewer: Player)
         myAnswer = state.answers[viewer.UserId],
         serviceOrders = state.serviceOrders,
         proposals = state.proposals,
+        voteOpen = state.voteOpen,
         actionFeed = state.actionFeed,
     }
 end
@@ -215,6 +217,12 @@ local function handleAction(player: Player, payload)
             state.scores[targetId] = (state.scores[targetId] or 0) + delta
             broadcast()
         end
+    elseif payload.type == "createRoom" and state.phase == "lobby" and state.hostUserId == 0 then
+        state.roomCode = "SIA-" .. string.sub(HttpService:GenerateGUID(false):gsub("-", ""), 1, 5):upper()
+        state.hostUserId = player.UserId
+        state.roles[player.UserId] = "host"
+        state.actionFeed = { text = player.DisplayName .. " создал комнату " .. state.roomCode, kind = "room" }
+        broadcast()
     elseif payload.type == "chooseRole" and state.phase == "lobby" then
         local role = tostring(payload.role or "")
         if role == "host" and (state.hostUserId == 0 or state.hostUserId == player.UserId) then
@@ -250,6 +258,14 @@ local function handleAction(player: Player, payload)
                 offline = result.offline,
             })
         end)
+    elseif payload.type == "startVote" and isHost(player) and state.phase == "lobby" then
+        state.voteOpen = true
+        state.actionFeed = { text = "Ведущий открыл голосование за следующий пак", kind = "catalog" }
+        broadcast()
+    elseif payload.type == "closeVote" and isHost(player) and state.phase == "lobby" then
+        state.voteOpen = false
+        state.actionFeed = { text = "Голосование закрыто — ведущий выбирает пак", kind = "catalog" }
+        broadcast()
     elseif payload.type == "proposePack" and state.phase == "lobby" then
         local workshopId = tostring(payload.workshopId or "")
         if string.match(workshopId, "^%d+$") or workshopId == "demo-lounge" then

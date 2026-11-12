@@ -243,11 +243,11 @@ roleHint.Position = UDim2.fromScale(0.08, 0.34)
 roleHint.Size = UDim2.fromScale(0.84, 0.2)
 roleHint.TextXAlignment = Enum.TextXAlignment.Center
 local playerRoleButton = button(rolePanel, "ИГРОК", COLORS.surface2, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.1, 0.62))
-local hostRoleButton = button(rolePanel, "ВЕДУЩИЙ", COLORS.accent, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.54, 0.62))
+local hostRoleButton = button(rolePanel, "СОЗДАТЬ КОМНАТУ", COLORS.accent, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.54, 0.62))
 playerRoleButton.ZIndex = 21
 hostRoleButton.ZIndex = 21
 playerRoleButton.Activated:Connect(function() action:FireServer({ type = "chooseRole", role = "player" }) end)
-hostRoleButton.Activated:Connect(function() action:FireServer({ type = "chooseRole", role = "host" }) end)
+hostRoleButton.Activated:Connect(function() action:FireServer({ type = "createRoom" }) end)
 
 local currentState
 local function findQuestion(id)

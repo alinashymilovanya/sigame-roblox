@@ -54,7 +54,18 @@ panel.Parent = gui
 
 local title = text(panel, "КАТАЛОГ ПАКОВ", 24, Color3.fromRGB(255, 229, 184))
 title.Position = UDim2.fromScale(0.05, 0.04)
-title.Size = UDim2.fromScale(0.65, 0.08)
+title.Size = UDim2.fromScale(0.5, 0.08)
+
+local voteButton = Instance.new("TextButton")
+voteButton.Name = "VoteToggle"
+voteButton.Text = "ОТКРЫТЬ ГОЛОСОВАНИЕ"
+voteButton.TextSize = 11
+voteButton.TextColor3 = Color3.fromRGB(255, 241, 214)
+voteButton.BackgroundColor3 = Color3.fromRGB(94, 57, 52)
+voteButton.Position = UDim2.fromScale(0.56, 0.04)
+voteButton.Size = UDim2.fromScale(0.34, 0.07)
+rounded(voteButton, 9)
+voteButton.Parent = panel
 
 local close = Instance.new("TextButton")
 close.Text = "×"
@@ -149,6 +160,21 @@ layout.Parent = list
 local currentState = { hostUserId = 0, proposals = {} }
 local lastItems = {}
 
+local function updateVoteButton()
+    local isHost = currentState.hostUserId == player.UserId
+    voteButton.Visible = isHost
+    voteButton.Text = currentState.voteOpen and "ЗАКРЫТЬ ГОЛОСОВАНИЕ" or "ОТКРЫТЬ ГОЛОСОВАНИЕ"
+    voteButton.BackgroundColor3 = currentState.voteOpen and Color3.fromRGB(178, 76, 55) or Color3.fromRGB(94, 57, 52)
+end
+
+voteButton.Activated:Connect(function()
+    if currentState.voteOpen then
+        action:FireServer({ type = "closeVote" })
+    else
+        action:FireServer({ type = "startVote" })
+    end
+end)
+
 local function clearList()
     for _, child in list:GetChildren() do
         if child:IsA("Frame") then
@@ -172,6 +198,7 @@ local function renderItems(items)
         cardTitle.Position = UDim2.fromScale(0.04, 0.12)
         cardTitle.Size = UDim2.fromScale(0.62, 0.27)
 
+        local proposal = currentState.proposals and currentState.proposals[tostring(item.workshopId)]
         local voteCount = 0
         if proposal and proposal.votes then
             for voted in proposal.votes do
@@ -184,7 +211,6 @@ local function renderItems(items)
         cardMeta.Position = UDim2.fromScale(0.04, 0.48)
         cardMeta.Size = UDim2.fromScale(0.62, 0.25)
 
-        local proposal = currentState.proposals and currentState.proposals[tostring(item.workshopId)]
         local isHost = currentState.hostUserId == player.UserId
         local install = Instance.new("TextButton")
         install.Text = isHost and "ВЫБРАТЬ" or (proposal and "ГОЛОСУЮ" or "ПРЕДЛОЖИТЬ")
@@ -212,6 +238,7 @@ end
 
 stateChanged.OnClientEvent:Connect(function(state)
     currentState = state
+    updateVoteButton()
     if panel.Visible and #lastItems > 0 then
         renderItems(lastItems)
     end
@@ -258,4 +285,6 @@ catalogResult.OnClientEvent:Connect(function(payload)
         end
     end
 end)
+
+updateVoteButton()
 
