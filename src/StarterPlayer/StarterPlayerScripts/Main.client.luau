@@ -72,6 +72,7 @@ local function button(parent: Instance, caption: string, color: Color3, size: UD
     item.TextSize = 14
     item.TextColor3 = COLORS.ink
     item.Font = Enum.Font.GothamBold
+    item.TextWrapped = true
     item.BackgroundColor3 = color
     item.Size = size
     item.Position = position
@@ -183,15 +184,16 @@ hostLayout.Parent = hostList
 local services = rounded(Instance.new("Frame"), 16, COLORS.surface2)
 services.AnchorPoint = Vector2.new(0, 1)
 services.Position = UDim2.fromScale(0.035, 0.95)
-services.Size = UDim2.fromScale(0.42, 0.16)
+services.Size = UDim2.fromScale(0.47, 0.16)
 services.BackgroundColor3 = Color3.fromRGB(58, 31, 36)
 services.Parent = backdrop
 local servicesTitle = text(services, "ЛАУНЖ-СЕРВИС", 13, COLORS.gold)
 servicesTitle.Position = UDim2.fromScale(0.05, 0.08)
 servicesTitle.Size = UDim2.fromScale(0.9, 0.2)
-local serviceNames = { { "🍵  ЧАЙ", "tea" }, { "☕  КОФЕ", "coffee" }, { "〰  КАЛЬЯН", "hookah" }, { "✦  ОФИЦИАНТ", "waiter" } }
+local serviceNames = { { "🍵 ЧАЙ", "tea" }, { "☕ КОФЕ", "coffee" }, { "〰 КАЛЬЯН", "hookah" }, { "✦ ЗОВ", "waiter" } }
 for index, service in serviceNames do
     local item = button(services, service[1], COLORS.surface2, UDim2.fromScale(0.22, 0.34), UDim2.fromScale(0.05 + ((index - 1) % 4) * 0.24, 0.46))
+    item.TextSize = 10
     item.Activated:Connect(function()
         action:FireServer({ type = "orderService", service = service[2] })
     end)
@@ -235,15 +237,18 @@ rolePanel.Visible = false
 rolePanel.ZIndex = 20
 rolePanel.Parent = backdrop
 local roleTitle = text(rolePanel, "КТО ТЫ В ЭТОЙ ИГРЕ?", 24, COLORS.gold)
+roleTitle.ZIndex = 21
 roleTitle.Position = UDim2.fromScale(0.08, 0.12)
 roleTitle.Size = UDim2.fromScale(0.84, 0.2)
 roleTitle.TextXAlignment = Enum.TextXAlignment.Center
 local roleHint = text(rolePanel, "Выбери роль перед началом партии", 14, COLORS.muted, false)
+roleHint.ZIndex = 21
 roleHint.Position = UDim2.fromScale(0.08, 0.34)
 roleHint.Size = UDim2.fromScale(0.84, 0.2)
 roleHint.TextXAlignment = Enum.TextXAlignment.Center
 local playerRoleButton = button(rolePanel, "ИГРОК", COLORS.surface2, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.1, 0.62))
 local hostRoleButton = button(rolePanel, "СОЗДАТЬ КОМНАТУ", COLORS.accent, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.54, 0.62))
+hostRoleButton.TextSize = 12
 playerRoleButton.ZIndex = 21
 hostRoleButton.ZIndex = 21
 playerRoleButton.Activated:Connect(function() action:FireServer({ type = "chooseRole", role = "player" }) end)

@@ -32,13 +32,14 @@ end
 
 local openButton = Instance.new("TextButton")
 openButton.Name = "OpenCatalog"
-openButton.Text = "ПАКИ  •  КАТАЛОГ"
+openButton.Text = "ПАКИ"
 openButton.TextSize = 16
+openButton.TextSize = 13
 openButton.TextColor3 = Color3.fromRGB(255, 236, 198)
 openButton.BackgroundColor3 = Color3.fromRGB(117, 57, 48)
 openButton.AnchorPoint = Vector2.new(1, 0)
 openButton.Position = UDim2.fromScale(0.98, 0.025)
-openButton.Size = UDim2.fromScale(0.2, 0.055)
+openButton.Size = UDim2.fromScale(0.26, 0.055)
 rounded(openButton, 10)
 openButton.Parent = gui
 

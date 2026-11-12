@@ -1,6 +1,11 @@
 local Lighting = game:GetService("Lighting")
 local Workspace = game:GetService("Workspace")
 
+for _, defaultName in { "Baseplate", "SpawnLocation" } do
+    local defaultPart = Workspace:FindFirstChild(defaultName)
+    if defaultPart then defaultPart:Destroy() end
+end
+
 local lounge = Workspace:FindFirstChild("SIGameLounge")
 if not lounge then
     lounge = Instance.new("Model")
@@ -93,10 +98,14 @@ displayHint.Font = Enum.Font.GothamBold
 displayHint.Parent = displayCard
 part("HostDesk", Vector3.new(8, 1.2, 3.5), Vector3.new(0, 2.5, -8.2), Color3.fromRGB(117, 61, 46), Enum.Material.Wood)
 part("HostBack", Vector3.new(7, 4, 0.7), Vector3.new(0, 4.5, -9.6), Color3.fromRGB(76, 39, 43), Enum.Material.Fabric)
+part("BarCounter", Vector3.new(24, 2.2, 1.8), Vector3.new(0, 1.25, 14.2), Color3.fromRGB(77, 39, 48), Enum.Material.Wood)
+part("BarTop", Vector3.new(25, 0.22, 2.1), Vector3.new(0, 2.45, 14.2), Color3.fromRGB(223, 127, 69), Enum.Material.Neon)
+part("BarGlow", Vector3.new(21, 0.12, 0.12), Vector3.new(0, 2.6, 13.2), Color3.fromRGB(246, 190, 93), Enum.Material.Neon)
+part("WallGlow", Vector3.new(42, 0.12, 0.12), Vector3.new(0, 5.2, 17.35), Color3.fromRGB(174, 73, 75), Enum.Material.Neon)
 
 local seatPositions = {
-    Vector3.new(-8, 1.4, -2), Vector3.new(-8, 1.4, 3), Vector3.new(8, 1.4, -2),
-    Vector3.new(8, 1.4, 3), Vector3.new(-3.5, 1.4, 7), Vector3.new(3.5, 1.4, 7),
+    Vector3.new(-12, 1.4, -2), Vector3.new(-12, 1.4, 3), Vector3.new(12, 1.4, -2),
+    Vector3.new(12, 1.4, 3), Vector3.new(-3.5, 1.4, 8), Vector3.new(3.5, 1.4, 8),
 }
 local function menuBook(name: string, position: Vector3)
     local menu = part(name, Vector3.new(1.4, 0.12, 0.9), position, Color3.fromRGB(184, 112, 72), Enum.Material.Wood)
@@ -127,6 +136,20 @@ for index, position in seatPositions do
     cushion("SeatBack" .. index, position + Vector3.new(0, 1.3, 0.9), Vector3.new(3.5, 2.4, 0.6), Color3.fromRGB(95, 48, 50))
     menuBook("MenuBook" .. index, position + Vector3.new(0, 3.35, 0))
 end
+
+local function hookah(name: string, position: Vector3)
+    local base = part(name .. "Base", Vector3.new(1.2, 0.6, 1.2), position, Color3.fromRGB(103, 205, 182), Enum.Material.Neon)
+    base.Shape = Enum.PartType.Cylinder
+    local stem = part(name .. "Stem", Vector3.new(0.22, 1.4, 0.22), position + Vector3.new(0, 0.9, 0), Color3.fromRGB(238, 166, 82), Enum.Material.Metal)
+    stem.Shape = Enum.PartType.Cylinder
+    local bowl = part(name .. "Bowl", Vector3.new(0.7, 0.45, 0.7), position + Vector3.new(0, 1.7, 0), Color3.fromRGB(207, 77, 73), Enum.Material.Neon)
+    bowl.Shape = Enum.PartType.Ball
+end
+
+hookah("HookahLeft", Vector3.new(-16, 1.1, 10.8))
+hookah("HookahRight", Vector3.new(16, 1.1, 10.8))
+part("TeaTray", Vector3.new(3.2, 0.18, 1.5), Vector3.new(-7.5, 3.35, -7.2), Color3.fromRGB(226, 143, 75), Enum.Material.Wood)
+part("CoffeeTray", Vector3.new(3.2, 0.18, 1.5), Vector3.new(7.5, 3.35, -7.2), Color3.fromRGB(226, 143, 75), Enum.Material.Wood)
 
 local hostSeat = Instance.new("Seat")
 hostSeat.Name = "HostSeat"
