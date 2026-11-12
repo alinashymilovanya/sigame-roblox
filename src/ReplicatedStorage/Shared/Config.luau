@@ -1,5 +1,5 @@
 return {
-    CatalogUrl = "http://127.0.0.1:8787",
+    CatalogUrl = "https://soft-wise-frequent-commonly.trycloudflare.com",
     DefaultBuzzSeconds = 8,
     DefaultAnswerSeconds = 20,
     ItemCooldownSeconds = 7,
