@@ -64,6 +64,8 @@ uv run --python 3.11 python -m catalog.catalog_service
 
 5. Включи `Allow HTTP requests` в Experience Settings Roblox Studio, если нужен внешний Workshop backend.
 
+Текущая локальная сборка уже настроена на временный HTTPS quick tunnel для каталога. Для сегодняшнего теста оставь запущенными backend и `.tools/cloudflared.exe tunnel --url http://127.0.0.1:8787`; для постоянного релиза замени `Config.CatalogUrl` на свой стабильный HTTPS-домен.
+
 ## Визуальные референсы
 
 - [Лаунж и рассадка ведущего](art/lounge-concept.png)
