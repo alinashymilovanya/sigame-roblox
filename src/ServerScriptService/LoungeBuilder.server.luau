@@ -98,6 +98,23 @@ local seatPositions = {
     Vector3.new(-8, 1.4, -2), Vector3.new(-8, 1.4, 3), Vector3.new(8, 1.4, -2),
     Vector3.new(8, 1.4, 3), Vector3.new(-3.5, 1.4, 7), Vector3.new(3.5, 1.4, 7),
 }
+local function menuBook(name: string, position: Vector3)
+    local menu = part(name, Vector3.new(1.4, 0.12, 0.9), position, Color3.fromRGB(184, 112, 72), Enum.Material.Wood)
+    local menuGui = Instance.new("SurfaceGui")
+    menuGui.Name = "MenuGui"
+    menuGui.Face = Enum.NormalId.Top
+    menuGui.LightInfluence = 0
+    menuGui.Parent = menu
+    local menuText = Instance.new("TextLabel")
+    menuText.Size = UDim2.fromScale(1, 1)
+    menuText.BackgroundColor3 = Color3.fromRGB(255, 229, 184)
+    menuText.TextColor3 = Color3.fromRGB(75, 38, 38)
+    menuText.Text = "ЧАЙ  •  КОФЕ\nКАЛЬЯН  •  МЕМЫ"
+    menuText.TextScaled = true
+    menuText.TextWrapped = true
+    menuText.Font = Enum.Font.GothamBold
+    menuText.Parent = menuGui
+end
 for index, position in seatPositions do
     local seat = Instance.new("Seat")
     seat.Name = "PlayerSeat" .. index
@@ -108,6 +125,7 @@ for index, position in seatPositions do
     seat.Anchored = true
     seat.Parent = lounge
     cushion("SeatBack" .. index, position + Vector3.new(0, 1.3, 0.9), Vector3.new(3.5, 2.4, 0.6), Color3.fromRGB(95, 48, 50))
+    menuBook("MenuBook" .. index, position + Vector3.new(0, 3.35, 0))
 end
 
 local hostSeat = Instance.new("Seat")

@@ -113,6 +113,11 @@ phaseLabel.AnchorPoint = Vector2.new(1, 0)
 phaseLabel.Position = UDim2.fromScale(0.965, 0.3)
 phaseLabel.Size = UDim2.fromScale(0.24, 0.3)
 phaseLabel.TextXAlignment = Enum.TextXAlignment.Right
+local roomLabel = text(header, "КОМНАТА SIA-?????", 11, COLORS.muted, false)
+roomLabel.AnchorPoint = Vector2.new(1, 0)
+roomLabel.Position = UDim2.fromScale(0.965, 0.64)
+roomLabel.Size = UDim2.fromScale(0.24, 0.2)
+roomLabel.TextXAlignment = Enum.TextXAlignment.Right
 
 local board = rounded(Instance.new("Frame"), 22, COLORS.surface2)
 board.AnchorPoint = Vector2.new(0.5, 0)
@@ -235,7 +240,7 @@ roleTitle.Size = UDim2.fromScale(0.84, 0.2)
 roleTitle.TextXAlignment = Enum.TextXAlignment.Center
 local roleHint = text(rolePanel, "Выбери роль перед началом партии", 14, COLORS.muted, false)
 roleHint.Position = UDim2.fromScale(0.08, 0.34)
-roleHint.Size = UDim2.fromScale(0.84, 0.14)
+roleHint.Size = UDim2.fromScale(0.84, 0.2)
 roleHint.TextXAlignment = Enum.TextXAlignment.Center
 local playerRoleButton = button(rolePanel, "ИГРОК", COLORS.surface2, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.1, 0.62))
 local hostRoleButton = button(rolePanel, "ВЕДУЩИЙ", COLORS.accent, UDim2.fromScale(0.36, 0.24), UDim2.fromScale(0.54, 0.62))
@@ -460,9 +465,11 @@ local function render(state)
     currentState = state
     local role = state.roles and (state.roles[tostring(player.UserId)] or state.roles[player.UserId])
     local isHost = state.hostUserId == player.UserId
+    roomLabel.Text = "КОМНАТА " .. tostring(state.roomCode or "SIA-?????")
     rolePanel.Visible = role == "undecided"
     if rolePanel.Visible then
-        roleHint.Text = state.hostUserId ~= 0 and "Ведущий уже выбран — заходи игроком" or "Выбери роль перед началом партии"
+        local roleMessage = state.hostUserId ~= 0 and "Ведущий уже выбран — заходи игроком" or "Выбери роль перед началом партии"
+        roleHint.Text = roleMessage .. "\nКод комнаты: " .. tostring(state.roomCode or "SIA-?????")
         return
     end
     phaseLabel.Text = state.phase == "question" and (isHost and "ВЕДУЩИЙ • ПРОВЕРКА" or "ВОПРОС ОТКРЫТ") or "ЛОББИ • " .. tostring(#state.players) .. " В ЗАЛЕ"

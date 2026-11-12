@@ -2,6 +2,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Debris = game:GetService("Debris")
 local Workspace = game:GetService("Workspace")
+local HttpService = game:GetService("HttpService")
 
 local shared = ReplicatedStorage:FindFirstChild("Shared")
 local config = require(shared:WaitForChild("Config"))
@@ -31,6 +32,7 @@ local demoQuestions = {
 }
 
 local state = {
+    roomCode = "SIA-" .. string.sub(HttpService:GenerateGUID(false):gsub("-", ""), 1, 5):upper(),
     hostUserId = 0,
     roles = {},
     packId = config.DemoPackId,
@@ -64,6 +66,7 @@ local function snapshot(viewer: Player)
         table.insert(players, { userId = player.UserId, name = player.DisplayName, isHost = player.UserId == state.hostUserId })
     end
     return {
+        roomCode = state.roomCode,
         hostUserId = state.hostUserId,
         packId = state.packId,
         phase = state.phase,
@@ -350,6 +353,7 @@ Players.PlayerRemoving:Connect(function(player)
     state.roles[player.UserId] = nil
     state.answers[player.UserId] = nil
     state.serviceOrders[player.UserId] = nil
+    state.pitUntil[player.UserId] = nil
     broadcast()
 end)
 
@@ -359,6 +363,25 @@ task.defer(function()
     while true do
         task.wait(5)
         broadcast()
+    end
+end)
+
+task.defer(function()
+    while true do
+        task.wait(1)
+        local changed = false
+        local now = os.time()
+        for userId, releaseAt in state.pitUntil do
+            if releaseAt <= now then
+                local target = Players:GetPlayerByUserId(userId)
+                if target and target.Character then
+                    target.Character:PivotTo(CFrame.new(0, 3, -15))
+                end
+                state.pitUntil[userId] = nil
+                changed = true
+            end
+        end
+        if changed then broadcast() end
     end
 end)
 
