@@ -55,6 +55,7 @@ uv run --python 3.11 python -m unittest discover -s catalog/tests -v
 
 - [Лаунж и рассадка ведущего](art/lounge-concept.png)
 - [Макет внутриигрового каталога](art/catalog-mockup.png)
+- [Финальный концепт lounge-сцены](art/sigame-lounge-render.png)
 
 ## Решение по внешним проектам
 
