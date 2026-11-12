@@ -238,6 +238,9 @@ local function handleAction(player: Player, payload)
             if not success then
                 success = true
                 result = { items = demoCatalog, offline = true }
+            elseif not result.items or #result.items == 0 then
+                result.items = demoCatalog
+                result.offline = true
             end
             catalogResult:FireClient(player, {
                 type = "search",
