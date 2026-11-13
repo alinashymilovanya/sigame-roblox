@@ -1,0 +1,30 @@
+<roblox version="4">
+    <Item class="Script" referent="RBX0">
+        <Properties>
+            <Content name="LinkedSource">null</Content>
+            <string name="Name">SIGamePublish</string>
+            <bool name="Disabled">false</bool>
+            <ProtectedString name="Source"><![CDATA[
+local StudioService = game:GetService("StudioService")
+local toolbar = plugin:CreateToolbar("SIGame Lounge")
+local button = toolbar:CreateButton("Publish SIGame", "Open Roblox publishing for SIGame Lounge", "")
+button.ClickableWhenViewportHidden = true
+
+local function openPublish()
+    local ok, err = pcall(function()
+        StudioService:ShowPublishToRoblox()
+    end)
+    if not ok then
+        warn("SIGame publish helper: " .. tostring(err))
+    end
+end
+
+button.Click:Connect(openPublish)
+task.defer(function()
+    task.wait(1)
+    openPublish()
+end)
+]]></ProtectedString>
+        </Properties>
+    </Item>
+</roblox>

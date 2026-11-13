@@ -10,5 +10,6 @@ node_modules/
 dist/
 build/
 .tools/
+.tmp/
 .vscode/settings.json
 

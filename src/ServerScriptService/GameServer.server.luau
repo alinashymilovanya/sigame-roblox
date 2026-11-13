@@ -66,6 +66,23 @@ local function snapshot(viewer: Player)
     for _, player in Players:GetPlayers() do
         table.insert(players, { userId = player.UserId, name = player.DisplayName, isHost = player.UserId == state.hostUserId })
     end
+    local questions = {}
+    for _, question in state.questions do
+        if isHost(viewer) then
+            table.insert(questions, question)
+        else
+            table.insert(questions, {
+                id = question.id,
+                category = question.category,
+                value = question.value,
+                kind = question.kind,
+                choices = question.choices,
+                media = question.media,
+                text = question.text,
+                answered = question.answered,
+            })
+        end
+    end
     return {
         roomCode = state.roomCode,
         hostUserId = state.hostUserId,
@@ -75,7 +92,7 @@ local function snapshot(viewer: Player)
         scores = state.scores,
         players = players,
         roles = state.roles,
-        questions = state.questions,
+        questions = questions,
         muted = state.muted,
         itemDisabled = state.itemDisabled,
         pitUntil = state.pitUntil,
@@ -215,12 +232,17 @@ local function handleAction(player: Player, payload)
         end
     elseif payload.type == "finishQuestion" and isHost(player) then
         local question = findQuestion(state.selectedQuestionId)
+        local revealed = nil
         if question then
             question.answered = true
+            if question.answer and question.answer ~= "" then
+                revealed = "Верный ответ: " .. question.answer
+            end
         end
         state.selectedQuestionId = nil
         state.answers = {}
         state.phase = "board"
+        state.actionFeed = { text = revealed or "Вопрос закрыт", kind = "answer" }
         broadcast()
     elseif payload.type == "submitAnswer" and state.phase == "question" then
         local question = findQuestion(state.selectedQuestionId)
@@ -317,7 +339,11 @@ local function handleAction(player: Player, payload)
         local workshopId = tostring(payload.workshopId or "")
         local proposal = state.proposals[workshopId]
         if proposal then
-            proposal.votes[player.UserId] = not proposal.votes[player.UserId]
+            if proposal.votes[player.UserId] then
+                proposal.votes[player.UserId] = nil   -- withdraw the vote entirely
+            else
+                proposal.votes[player.UserId] = true
+            end
             broadcast()
         end
     elseif payload.type == "installPack" and isHost(player) and state.phase == "lobby" and not installInProgress then

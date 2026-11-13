@@ -360,6 +360,10 @@ local function renderBoard(state)
 end
 
 local function renderQuestion(state, question, isHost)
+    local previous = board:FindFirstChild("QuestionModal")
+    if previous then
+        previous:Destroy()
+    end
     local modal = rounded(Instance.new("Frame"), 18, COLORS.gold)
     modal.Name = "QuestionModal"
     modal.Position = UDim2.fromScale(0.04, 0.18)
